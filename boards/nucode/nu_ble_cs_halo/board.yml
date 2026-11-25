@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+board:
+  extend: nrf54lm20dk
+  variants:
+    - name: nu_ble_cs_halo
+      qualifier: nrf54lm20b/cpuapp
+
+runners:
+  priority: 20
+  run_once:
+    '--recover':
+      - runners: [nrfutil]
+        run: first
+        groups: &halo_groups
+          - boards: [nrf54lm20dk/nrf54lm20b/cpuapp/nu_ble_cs_halo]
+    '--erase':
+      - runners: [jlink, nrfutil]
+        run: first
+        groups: *halo_groups
+    '--reset':
+      - runners: [jlink, nrfutil]
+        run: last
+        groups: *halo_groups

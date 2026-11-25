@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2026 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <nordic/nrf54lm20b_cpuapp.dtsi>
+#include <vendor/nordic/nrf54lm20b_cpuapp_partition.dtsi>
+#include "halo_peripherals.dtsi"
+#include "nu_ble_cs_halo_rf.dtsi"
+
+/ {
+	model = "NU BLE CS HALO";
+	compatible = "nucode,nu-ble-cs-halo";
+
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+		zephyr,usb-bc12 = &usbhs_bc12;
+		zephyr,flash-controller = &rram_controller;
+		zephyr,flash = &cpuapp_rram;
+		zephyr,code-partition = &slot0_partition;
+		zephyr,sram = &cpuapp_sram;
+	};
+};
+
+&cpuapp_sram {
+	status = "okay";
+};
+
+&clock {
+	status = "okay";
+};
+
+&hfpll {
+	clock-frequency = <DT_FREQ_M(128)>;
+};
+
+/* Y1: CL=9 pF. Estimate 1 pF stray capacitance per pin for bring-up. */
+&lfxo {
+	load-capacitors = "internal";
+	load-capacitance-femtofarad = <17000>;
+};
+
+/* Initial SDK reference setting; confirm against the X1 module's internal BOM. */
+&hfxo {
+	load-capacitors = "internal";
+	load-capacitance-femtofarad = <15000>;
+};
+
+&grtc {
+	owned-channels = <0 1 2 3 4 5 6 7 8 9 10 11>;
+	child-owned-channels = <3 4 7 8 9 10 11>;
+	status = "okay";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&gpio2 {
+	status = "okay";
+};
+
+&gpio3 {
+	status = "okay";
+};
+
+&gpiote20 {
+	status = "okay";
+};
+
+&gpiote30 {
+	status = "okay";
+};
+
+&radio {
+	status = "okay";
+};
+
+&vregmain {
+	status = "okay";
+};
+
+&vregusb {
+	status = "okay";
+};
+
+&usbhs_bc12 {
+	status = "okay";
+};
+
+zephyr_udc0: &usbhs {
+	status = "okay";
+
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
+};

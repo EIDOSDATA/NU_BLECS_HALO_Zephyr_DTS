@@ -1,0 +1,34 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/* U3 (SKY13370-374LF) connects RFC to RF1/ANTA at V1=1, V2=0.
+ * Set this path at boot for advertising, NUS, and single-antenna CS.
+ */
+&gpio1 {
+	rfsw_v1_boot: rfsw-v1-boot {
+		gpio-hog;
+		gpios = <17 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "RFSW_V1";
+	};
+
+	rfsw_v2_boot: rfsw-v2-boot {
+		gpio-hog;
+		gpios = <18 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "RFSW_V2";
+	};
+};
+
+/ {
+	/* With two-antenna CS enabled, the SoftDevice Controller takes
+	 * over these GPIOs. Its antenna indices 0 and 1 select A and B.
+	 */
+	cs_antenna_switch: cs-antenna-config {
+		compatible = "nordic,bt-cs-antenna-switch";
+		ant-gpios = <&gpio1 17 GPIO_ACTIVE_HIGH>,
+			    <&gpio1 18 GPIO_ACTIVE_HIGH>;
+		multiplexing-mode = <0>;
+	};
+};

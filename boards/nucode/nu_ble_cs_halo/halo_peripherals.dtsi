@@ -1,0 +1,203 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/adc/nrf-saadc.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/i2c/i2c.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include "halo-pinctrl.dtsi"
+
+/ {
+	aliases {
+		led0 = &led_red;
+		led1 = &led_green;
+		led2 = &led_blue;
+		sw0 = &button0;
+		mcuboot-button0 = &button0;
+		mcuboot-led0 = &led_red;
+		accel0 = &imu;
+		gyro0 = &imu;
+		adc = &adc;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_red: red {
+			gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>;
+			label = "D1 red";
+		};
+
+		led_green: green {
+			gpios = <&gpio1 23 GPIO_ACTIVE_HIGH>;
+			label = "D1 green";
+		};
+
+		led_blue: blue {
+			gpios = <&gpio1 24 GPIO_ACTIVE_HIGH>;
+			label = "D1 blue";
+		};
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+
+		button0: button-0 {
+			gpios = <&gpio0 8 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "SW1";
+			zephyr,code = <INPUT_KEY_0>;
+		};
+	};
+
+	zephyr,user {
+		/* LM66200 ST is high on 3V3_SYS and low on VBAT. */
+		ideal-st-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
+		/* INT2 is connected to P1.14 only when SB1 is bridged. */
+		imu-int2-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+		io-channels = <&adc 0>, <&adc 1>, <&adc 2>, <&adc 3>,
+			      <&adc 4>, <&adc 5>, <&adc 6>, <&adc 7>;
+	};
+
+	/* P1 and P2 use the physical 2x5 pad numbers. Pins 1/2 are VMCU/GND. */
+	p1_analog: analog-header {
+		compatible = "gpio-nexus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0>;
+		gpio-map-pass-thru = <0 0xffffffff>;
+		gpio-map = <3 0 &gpio1 0 0>, <4 0 &gpio1 31 0>,
+			   <5 0 &gpio1 30 0>, <6 0 &gpio1 29 0>,
+			   <7 0 &gpio1 6 0>, <8 0 &gpio1 5 0>,
+			   <9 0 &gpio1 4 0>, <10 0 &gpio1 3 0>;
+	};
+
+	p2_digital: digital-header {
+		compatible = "gpio-nexus";
+		#gpio-cells = <2>;
+		gpio-map-mask = <0xffffffff 0>;
+		gpio-map-pass-thru = <0 0xffffffff>;
+		gpio-map = <3 0 &gpio0 3 0>, <4 0 &gpio3 0 0>,
+			   <5 0 &gpio0 4 0>, <6 0 &gpio3 1 0>,
+			   <7 0 &gpio0 6 0>, <8 0 &gpio3 4 0>,
+			   <9 0 &gpio0 7 0>, <10 0 &gpio3 5 0>;
+	};
+};
+
+&uart20 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&halo_uart20_default>;
+	pinctrl-1 = <&halo_uart20_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&spi00 {
+	status = "okay";
+	pinctrl-0 = <&halo_spi00_default>;
+	pinctrl-1 = <&halo_spi00_sleep>;
+	pinctrl-names = "default", "sleep";
+	cs-gpios = <&gpio2 5 GPIO_ACTIVE_LOW>;
+
+	imu: imu@0 {
+		compatible = "invensense,icm42670p";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+		int-gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
+		accel-hz = <800>;
+		accel-fs = <16>;
+		gyro-hz = <800>;
+		gyro-fs = <2000>;
+	};
+};
+
+modulo_i2c: &i2c22 {
+	status = "okay";
+	pinctrl-0 = <&halo_i2c22_default>;
+	pinctrl-1 = <&halo_i2c22_sleep>;
+	pinctrl-names = "default", "sleep";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	/* NCS v3.4.2 has no MS5637 sensor driver. */
+	ms5637: pressure@76 {
+		compatible = "meas,ms5637";
+		reg = <0x76>;
+		status = "disabled";
+	};
+};
+
+&adc {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN0>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@1 {
+		reg = <1>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN1>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@2 {
+		reg = <2>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN2>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@3 {
+		reg = <3>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN3>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@4 {
+		reg = <4>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN4>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@5 {
+		reg = <5>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN5>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@6 {
+		reg = <6>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN6>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@7 {
+		reg = <7>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN7>;
+		zephyr,resolution = <12>;
+	};
+};

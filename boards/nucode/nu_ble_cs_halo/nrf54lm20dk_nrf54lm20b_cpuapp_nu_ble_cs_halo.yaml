@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+identifier: nrf54lm20dk/nrf54lm20b/cpuapp/nu_ble_cs_halo
+name: NU BLE CS HALO
+type: mcu
+arch: arm
+toolchain:
+  - gnuarmemb
+  - zephyr
+sysbuild: true
+ram: 511
+flash: 968
+supported:
+  - adc
+  - ble
+  - gpio
+  - i2c
+  - spi
+  - uart
+  - usbd
